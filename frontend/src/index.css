@@ -769,6 +769,55 @@ All colors MUST be HSL.
   fill: #ab68ff;
 }
 
+/* Lenis Smooth Scroll Configuration */
+html.lenis {
+  height: auto;
+}
+
+html.lenis body {
+  /* Remove default smooth scroll behavior when Lenis is active */
+  scroll-behavior: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* Prevent flash of unstyled content during Lenis initialization */
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Enhanced scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.8);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));
@@ -776,5 +825,10 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Only apply smooth scroll when Lenis is not active */
+  html:not(.lenis) {
+    scroll-behavior: smooth;
   }
 }

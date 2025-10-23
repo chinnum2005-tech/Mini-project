@@ -71,21 +71,24 @@ export default function Login() {
     setIsLoading(true);
     setMessage("");
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`, { 
+      const res = await axios.post(`http://localhost:5000/api/auth/google`, { 
         credential: credentialResponse.credential 
       });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userData", JSON.stringify(res.data.user));
       navigate("/dashboard");
     } catch (error) {
+      console.error("Google login error:", error);
       setMessage(error.response?.data?.message || "Google login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleError = () => {
-    setMessage("Google login failed. Please try again.");
+  const handleGoogleError = (error) => {
+    console.error("Google Sign In Error:", error);
+    // Show detailed error in UI for debugging
+    setMessage(`Google sign in failed: ${error?.error || error?.message || JSON.stringify(error)}. Try email login instead.`);
   };
 
   return (
@@ -134,17 +137,19 @@ export default function Login() {
 
             <div className="relative z-10">
               {/* Google Sign In */}
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap={false}
-                theme="outline"
-                size="large"
-                text="signin_with"
-                shape="rectangular"
-                width="100%"
-                className="w-full"
-              />
+              {/* Google Sign In */}
+               <GoogleLogin
+                 onSuccess={handleGoogleSuccess}
+                 onError={handleGoogleError}
+                 useOneTap
+                 theme="filled_blue"
+                 text="signin_with"
+                 shape="pill"
+                 size="large"
+                 width="100%"
+                 logo_alignment="center"
+                 className="w-full"
+               />
 
               {/* Divider */}
               <div className="flex items-center gap-4 my-6">

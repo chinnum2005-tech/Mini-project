@@ -54,6 +54,23 @@ export async function fetchUserProfile(token = null) {
   return response.data;
 }
 
+// Get user's skills
+export async function fetchUserSkills(token = null) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await api.get('/user-skills/skills', { headers });
+  return response.data;
+}
+
+// Find mentor matches based on skills
+export async function findMentorMatches(skillPreferences, token = null) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await api.post('/skill-matching/match-mentors', 
+    { skill_preferences: skillPreferences },
+    { headers }
+  );
+  return response.data;
+}
+
 // Get allowed email domains
 export async function getAllowedDomains() {
   const response = await api.get('/auth/allowed-domains');

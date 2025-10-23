@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Sparkles, ArrowLeft, Mail, User, CheckCircle, AlertCircle } from "lucide-react";
+import { sendOTP, verifyOTP } from "@/api";
 
 function Signup() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState("signup"); // "signup" or "verify"
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -23,9 +24,9 @@ function Signup() {
     });
   };
 
-  const handleSignup = async (e) => {
+  const handleSendOTP = async (e) => {
     e.preventDefault();
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email) {
       setMessage("Please fill in all fields");
       return;
     }
@@ -34,14 +35,43 @@ function Signup() {
     setMessage("");
 
     try {
-      // For demo purposes, we'll simulate account creation
-      // In a real app, you'd call an actual signup endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-
-      setMessage("✅ Account created successfully!");
-      setTimeout(() => navigate("/dashboard"), 1500);
+      const response = await sendOTP(email);
+      if (response.success) {
+        setMessage("✅ OTP sent to your email! Please check your inbox.");
+        setStep("verify");
+      } else {
+        setMessage(`❌ ${response.message || "Failed to send OTP. Please try again."}`);
+      }
     } catch (error) {
-      setMessage("Signup failed. Please try again.");
+      setMessage("❌ Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (!otp) {
+      setMessage("Please enter the OTP");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      const response = await verifyOTP(email, otp, firstName, lastName, true);
+      if (response.success) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userData', JSON.stringify(response.user));
+        setMessage("✅ Account created successfully!");
+        // Redirect to profile setup for new users
+        setTimeout(() => navigate("/student-profile-setup"), 1500);
+      } else {
+        setMessage(`❌ ${response.message || "Invalid OTP. Please try again."}`);
+      }
+    } catch (error) {
+      setMessage("❌ Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -93,89 +123,131 @@ function Signup() {
             />
 
             <div className="relative z-10">
-              <form onSubmit={handleSignup} className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+              {step === "signup" ? (
+                <form onSubmit={handleSendOTP} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-2">
+                        <User className="w-4 h-4 inline mr-1" />
+                        First Name
+                      </label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        placeholder="John"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-2">
+                        <User className="w-4 h-4 inline mr-1" />
+                        Last Name
+                      </label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        placeholder="Doe"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-2">
-                      <User className="w-4 h-4 inline mr-1" />
-                      First Name
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                      <Mail className="w-4 h-4 inline mr-1" />
+                      Email Address
                     </label>
                     <input
-                      id="firstName"
-                      type="text"
-                      placeholder="John"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
                       required
                     />
                   </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full px-8 py-4 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending OTP...
+                      </>
+                    ) : (
+                      "Send OTP to Email"
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOTP} className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Enter Verification Code</h3>
+                    <p className="text-muted-foreground text-sm">
+                      We've sent a 6-digit code to <strong>{email}</strong>
+                    </p>
+                  </div>
+
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-2">
-                      <User className="w-4 h-4 inline mr-1" />
-                      Last Name
+                    <label htmlFor="otp" className="block text-sm font-medium text-foreground mb-2">
+                      Verification Code
                     </label>
                     <input
-                      id="lastName"
+                      id="otp"
                       type="text"
-                      placeholder="Doe"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
+                      placeholder="Enter 6-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm text-center text-lg tracking-widest"
+                      maxLength={6}
                       required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                    <Mail className="w-4 h-4 inline mr-1" />
-                    Email Address
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
-                    required
-                  />
-                </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full px-8 py-4 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Verifying...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
+                  </button>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    placeholder="Create a strong password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
-                    required
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-8 py-4 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Creating Account...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </button>
-              </form>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("signup");
+                      setOtp("");
+                      setMessage("");
+                    }}
+                    className="w-full px-4 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+                  >
+                    ← Back to signup
+                  </button>
+                </form>
+              )}
 
               {/* Message Display */}
               {message && (

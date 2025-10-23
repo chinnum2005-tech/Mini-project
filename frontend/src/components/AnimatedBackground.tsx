@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import MagicBento from './Components/MagicBento';
 
-type AnimationType = 'gradient' | 'particles' | 'blobs';
+type AnimationType = 'gradient' | 'particles' | 'blobs' | 'magicbento' | 'ethereal';
 
 interface AnimatedBackgroundProps {
   type?: AnimationType;
@@ -10,6 +11,7 @@ interface AnimatedBackgroundProps {
   intensity?: number;
   disableOnMobile?: boolean;
   className?: string;
+  enableMagicBento?: boolean;
 }
 
 export const AnimatedBackground = ({
@@ -18,7 +20,8 @@ export const AnimatedBackground = ({
   secondaryColor = 'hsl(var(--secondary))',
   intensity = 0.5,
   disableOnMobile = true,
-  className = ''
+  className = '',
+  enableMagicBento = false
 }: AnimatedBackgroundProps) => {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -52,10 +55,18 @@ export const AnimatedBackground = ({
     return <ParticlesBackground primaryColor={primaryColor} intensity={intensity} className={className} />;
   }
 
+  if (type === 'magicbento' && enableMagicBento) {
+    return <MagicBentoBackground primaryColor={primaryColor} secondaryColor={secondaryColor} intensity={intensity} className={className} />;
+  }
+
+  if (type === 'ethereal') {
+    return <EtherealBackground primaryColor={primaryColor} secondaryColor={secondaryColor} intensity={intensity} className={className} />;
+  }
+
   return <BlobsBackground primaryColor={primaryColor} secondaryColor={secondaryColor} intensity={intensity} className={className} />;
 };
 
-const GradientBackground = ({ primaryColor, secondaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile'>) => {
+const GradientBackground = ({ primaryColor, secondaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile' | 'enableMagicBento'>) => {
   const duration = 20 / (intensity || 0.5);
 
   return (
@@ -98,7 +109,7 @@ const GradientBackground = ({ primaryColor, secondaryColor, intensity, className
   );
 };
 
-const ParticlesBackground = ({ primaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile' | 'secondaryColor'>) => {
+const ParticlesBackground = ({ primaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile' | 'secondaryColor' | 'enableMagicBento'>) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -171,7 +182,7 @@ const ParticlesBackground = ({ primaryColor, intensity, className }: Omit<Animat
   );
 };
 
-const BlobsBackground = ({ primaryColor, secondaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile'>) => {
+const BlobsBackground = ({ primaryColor, secondaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile' | 'enableMagicBento'>) => {
   const duration = 15 / (intensity || 0.5);
 
   return (
@@ -211,6 +222,89 @@ const BlobsBackground = ({ primaryColor, secondaryColor, intensity, className }:
           x: ['50%', '20%', '70%', '50%'],
           y: ['-10%', '110%'],
           scale: [1, 0.9, 1.1, 1]
+        }}
+        transition={{
+          duration: duration * 0.8,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+    </div>
+  );
+};
+
+const MagicBentoBackground = ({ primaryColor, secondaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile' | 'enableMagicBento'>) => {
+  return (
+    <div className={`fixed inset-0 -z-10 overflow-hidden ${className}`} aria-hidden="true" style={{ pointerEvents: 'none' }}>
+      <div className="absolute inset-0 opacity-10">
+        {/* Simplified magic bento grid for background */}
+        <div className="grid grid-cols-4 grid-rows-3 gap-4 h-full w-full p-8">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="rounded-xl"
+              style={{ 
+                backgroundColor: i % 2 === 0 ? primaryColor : secondaryColor,
+                opacity: 0.1 + (intensity * 0.2)
+              }}
+              animate={{
+                scale: [1, 1 + (intensity * 0.1), 1],
+                rotate: [0, intensity * 2, 0]
+              }}
+              transition={{
+                duration: 10 + (i * 2),
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EtherealBackground = ({ primaryColor, secondaryColor, intensity, className }: Omit<AnimatedBackgroundProps, 'type' | 'disableOnMobile' | 'enableMagicBento'>) => {
+  const duration = 25 / (intensity || 0.5);
+
+  return (
+    <div className={`fixed inset-0 -z-10 overflow-hidden ${className}`} aria-hidden="true" style={{ pointerEvents: 'none' }}>
+      {/* Ethereal floating elements */}
+      <motion.div
+        className="absolute w-64 h-64 rounded-full opacity-10"
+        style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}
+        animate={{
+          x: [0, 100, 0],
+          y: [0, -100, 0],
+          scale: [1, 1.5, 1]
+        }}
+        transition={{
+          duration: duration,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <motion.div
+        className="absolute top-1/2 left-1/2 w-48 h-48 rounded-full opacity-15"
+        style={{ background: `radial-gradient(circle, ${secondaryColor}, transparent)` }}
+        animate={{
+          x: [0, -100, 0],
+          y: [0, 100, 0],
+          scale: [1, 0.8, 1]
+        }}
+        transition={{
+          duration: duration * 1.2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      <motion.div
+        className="absolute bottom-0 right-0 w-32 h-32 rounded-full opacity-20"
+        style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}
+        animate={{
+          x: [0, 50, 0],
+          y: [0, -50, 0],
+          scale: [1, 1.2, 1]
         }}
         transition={{
           duration: duration * 0.8,

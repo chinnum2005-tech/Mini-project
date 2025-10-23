@@ -1,17 +1,32 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { GoogleLogin } from '@react-oauth/google';
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { Sparkles, ArrowLeft, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
+import { Sparkles, ArrowLeft, Mail, CheckCircle, AlertCircle } from "lucide-react";
+import { sendOTP, verifyOTP } from "@/api";
 
 function Login() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState("login"); // "login" or "verify"
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  const [role, setRole] = useState("student"); // default role
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Get role from URL query parameters
+    const searchParams = new URLSearchParams(location.search);
+    const roleParam = searchParams.get('role');
+    if (roleParam === 'mentor') {
+      setRole('mentor');
+    } else {
+      setRole('student');
+    }
+  }, [location]);
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -21,10 +36,10 @@ function Login() {
     });
   };
 
-  const handleLogin = async (e) => {
+  const handleSendOTP = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setMessage("Please fill in all fields");
+    if (!email) {
+      setMessage("Please enter your email address");
       return;
     }
 
@@ -32,25 +47,50 @@ function Login() {
     setMessage("");
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userData', JSON.stringify(data.user));
-        setMessage("✅ Login successful!");
-        setTimeout(() => navigate("/dashboard"), 1500);
+      const response = await sendOTP(email);
+      if (response.success) {
+        setMessage("✅ OTP sent to your email! Please check your inbox.");
+        setStep("verify");
       } else {
-        setMessage("Invalid credentials. Please try again.");
+        setMessage(`❌ ${response.message || "Failed to send OTP. Please try again."}`);
       }
     } catch (error) {
-      setMessage("Login failed. Please check your connection and try again.");
+      setMessage("❌ Failed to send OTP. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (!otp) {
+      setMessage("Please enter the OTP");
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      const response = await verifyOTP(email, otp, null, null, false);
+      if (response.success) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userData', JSON.stringify(response.user));
+        setMessage("✅ Login successful!");
+        
+        // Redirect to dashboard for all users (existing users)
+        setTimeout(() => {
+          if (role === 'mentor') {
+            navigate("/mentor-dashboard");
+          } else {
+            navigate("/student-dashboard");
+          }
+        }, 1500);
+      } else {
+        setMessage(`❌ ${response.message || "Invalid OTP. Please try again."}`);
+      }
+    } catch (error) {
+      setMessage("❌ Login failed. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +100,7 @@ function Login() {
     setIsLoading(true);
     setMessage("");
     try {
-      const response = await fetch('/api/auth/google', {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +113,15 @@ function Login() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('userData', JSON.stringify(data.user));
         setMessage("✅ Login successful!");
-        setTimeout(() => navigate("/dashboard"), 1500);
+        
+        // Redirect to dashboard for all users (existing users)
+        setTimeout(() => {
+          if (role === 'mentor') {
+            navigate("/mentor-dashboard");
+          } else {
+            navigate("/student-dashboard");
+          }
+        }, 1500);
       } else {
         setMessage("Google login failed. Please try again.");
       }
@@ -111,7 +159,7 @@ function Login() {
             </Link>
             <h2 className="text-3xl font-bold text-foreground mb-2">Welcome Back</h2>
             <p className="text-muted-foreground">
-              Sign in to your BlockLearn account
+              Sign in to your BlockLearn account as a {role}
             </p>
           </div>
 
@@ -134,63 +182,98 @@ function Login() {
             />
 
             <div className="relative z-10">
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                    <Mail className="w-4 h-4 inline mr-1" />
-                    Email Address
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
-                    required
-                  />
-                </div>
+              {step === "login" ? (
+                <form onSubmit={handleSendOTP} className="space-y-6">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                      <Mail className="w-4 h-4 inline mr-1" />
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                    <Lock className="w-4 h-4 inline mr-1" />
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm"
-                    required
-                  />
-                </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full px-8 py-4 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending OTP...
+                      </>
+                    ) : (
+                      "Send OTP to Login"
+                    )}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOTP} className="space-y-6">
+                  <div className="text-center mb-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Enter Verification Code</h3>
+                    <p className="text-muted-foreground text-sm">
+                      We've sent a 6-digit code to <strong>{email}</strong>
+                    </p>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
-                    Forgot password?
-                  </Link>
-                </div>
+                  <div>
+                    <label htmlFor="otp" className="block text-sm font-medium text-foreground mb-2">
+                      Verification Code
+                    </label>
+                    <input
+                      id="otp"
+                      type="text"
+                      placeholder="Enter 6-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="w-full px-4 py-3 bg-card/50 border border-border rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent backdrop-blur-sm text-center text-lg tracking-widest"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full px-8 py-4 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Signing in...
-                    </>
-                  ) : (
-                    "Sign In"
-                  )}
-                </button>
-              </form>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full px-8 py-4 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Verifying...
+                      </>
+                    ) : (
+                      "Sign In"
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep("login");
+                      setOtp("");
+                      setMessage("");
+                    }}
+                    className="w-full px-4 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
+                  >
+                    ← Back to login
+                  </button>
+                </form>
+              )}
 
               {/* Divider */}
               <div className="flex items-center gap-4 my-6">
@@ -208,8 +291,8 @@ function Login() {
                 size="large"
                 text="signin_with"
                 shape="rectangular"
-                width="100%"
-                className="w-full"
+                width="400px"
+                className="w-full flex justify-center"
               />
 
               {/* Message Display */}

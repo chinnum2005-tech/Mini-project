@@ -99,7 +99,7 @@ const ChatWidget = () => {
   const loadConversation = async (conversationId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/chat/conversation/${conversationId}`, {
+      const response = await fetch(`http://localhost:5000/api/chat/conversation/${conversationId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

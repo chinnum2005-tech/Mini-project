@@ -2,7 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const pool = require("../config/database");
-const { sendOTP } = require("../config/email");
+const { sendOTP, sendAccountDeletionEmail } = require("../config/email");
 const nodemailer = require('nodemailer');
 const { generateOTP, isValidCampusEmail } = require("../utils/helper");
 const { authenticateToken } = require("../middleware/auth");
@@ -65,19 +65,29 @@ router.post("/send-otp", otpLimiter, async (req, res) => {
       ON CONFLICT (email) 
       DO UPDATE SET otp = $2, expires_at = $3, verified = false
     `;
-    await pool.query(query, [email, otp, expiresAt]);
+    // If ON CONFLICT fails, try alternative approach
+    try {
+      await pool.query(query, [email, otp, expiresAt]);
+    } catch (conflictError) {
+      // Fallback: Delete existing record and insert new one
+      await pool.query('DELETE FROM email_verifications WHERE email = $1', [email]);
+      await pool.query('INSERT INTO email_verifications (email, otp, expires_at) VALUES ($1, $2, $3)', [email, otp, expiresAt]);
+    }
 
     // Send OTP via email
+    console.log(`[send-otp] Generated OTP: ${otp} for email: ${email}`);
     const emailSent = await sendOTP(email, otp);
     if (emailSent) {
+      console.log(`[send-otp] OTP email successfully sent to ${email}`);
       return res.json({
         success: true,
         message: "OTP sent to your campus email",
       });
     } else {
+      console.error(`[send-otp] Failed to send OTP email to ${email}`);
       return res.status(500).json({
         success: false,
-        message: "Failed to send OTP. Please try again.",
+        message: "Failed to send OTP. Please check your email address and try again.",
       });
     }
   } catch (error) {
@@ -116,9 +126,11 @@ router.get('/email-health', async (req, res) => {
 router.post("/verify-otp", verifyOtpLimiter, async (req, res) => {
   try {
     const { email, otp, firstName, lastName, isNewUser } = req.body;
+    console.log(`[verify-otp] Received request for email: ${email}, otp: ${otp}, isNewUser: ${isNewUser}`);
 
     // Validate inputs
     if (!email || !otp) {
+      console.log(`[verify-otp] Missing email or OTP`);
       return res.status(400).json({
         success: false,
         message: "Email and OTP are required",
@@ -127,6 +139,7 @@ router.post("/verify-otp", verifyOtpLimiter, async (req, res) => {
 
     // Validate OTP format (6 digits)
     if (!/^\d{6}$/.test(otp)) {
+      console.log(`[verify-otp] Invalid OTP format: ${otp}`);
       return res.status(400).json({
         success: false,
         message: "OTP must be 6 digits",
@@ -135,6 +148,7 @@ router.post("/verify-otp", verifyOtpLimiter, async (req, res) => {
 
     // Validate names if new user
     if (isNewUser && (!firstName || !lastName)) {
+      console.log(`[verify-otp] Missing first or last name for new user`);
       return res.status(400).json({
         success: false,
         message: "First name and last name are required for registration",
@@ -142,12 +156,23 @@ router.post("/verify-otp", verifyOtpLimiter, async (req, res) => {
     }
 
     // Check OTP
+    console.log(`[verify-otp] Checking OTP in database`);
     const otpQuery = `
       SELECT * FROM email_verifications 
       WHERE email = $1 AND otp = $2 AND expires_at > NOW() AND verified = false
     `;
     const otpResult = await pool.query(otpQuery, [email, otp]);
+    console.log(`[verify-otp] Database query result: ${otpResult.rows.length} rows found`);
+    
     if (otpResult.rows.length === 0) {
+      console.log(`[verify-otp] No valid OTP found for email: ${email}`);
+      // Let's also check what OTPs exist for this email (for debugging)
+      const allOtps = await pool.query(
+        "SELECT otp, expires_at, verified FROM email_verifications WHERE email = $1 ORDER BY expires_at DESC LIMIT 5",
+        [email]
+      );
+      console.log(`[verify-otp] All OTPs for ${email}:`, allOtps.rows);
+      
       return res.status(400).json({
         success: false,
         message: "Invalid or expired OTP",
@@ -155,6 +180,7 @@ router.post("/verify-otp", verifyOtpLimiter, async (req, res) => {
     }
 
     // Mark OTP as used
+    console.log(`[verify-otp] Marking OTP as verified`);
     await pool.query(
       "UPDATE email_verifications SET verified = true WHERE email = $1",
       [email]
@@ -398,6 +424,206 @@ router.post("/login", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+});
+
+// ✅ Update user profile
+router.put("/profile", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { fullName, schoolName, yearOfStudy, department, learningGoals } = req.body;
+    
+    // Split full name into first and last name
+    const nameParts = fullName ? fullName.trim().split(' ') : [];
+    const firstName = nameParts.length > 0 ? nameParts[0] : '';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    
+    // Update user information
+    const updateUserQuery = `
+      UPDATE users 
+      SET first_name = $1, last_name = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING id, email, first_name, last_name, campus_verified, profile_complete
+    `;
+    
+    const userResult = await pool.query(updateUserQuery, [firstName, lastName, userId]);
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Check if user profile exists
+    const profileCheckQuery = `SELECT id FROM user_profiles WHERE user_id = $1`;
+    const profileCheckResult = await pool.query(profileCheckQuery, [userId]);
+    
+    let profile;
+    if (profileCheckResult.rows.length > 0) {
+      // Update existing profile
+      const updateProfileQuery = `
+        UPDATE user_profiles 
+        SET campus = $1, year_of_study = $2, department = $3, learning_goals = $4, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $5
+        RETURNING id, user_id, campus, year_of_study, department, learning_goals
+      `;
+      
+      const profileResult = await pool.query(updateProfileQuery, [
+        schoolName, 
+        yearOfStudy, 
+        department,
+        learningGoals,
+        userId
+      ]);
+      
+      profile = profileResult.rows[0];
+    } else {
+      // Create new profile
+      const createProfileQuery = `
+        INSERT INTO user_profiles (user_id, campus, year_of_study, department, learning_goals)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, user_id, campus, year_of_study, department, learning_goals
+      `;
+      
+      const profileResult = await pool.query(createProfileQuery, [
+        userId, 
+        schoolName, 
+        yearOfStudy, 
+        department,
+        learningGoals
+      ]);
+      
+      profile = profileResult.rows[0];
+    }
+    
+    return res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        campusVerified: user.campus_verified,
+        profileComplete: user.profile_complete,
+      },
+      profile: {
+        id: profile.id,
+        campus: profile.campus,
+        yearOfStudy: profile.year_of_study,
+        department: profile.department,
+        learningGoals: profile.learning_goals
+      }
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+});
+
+// ✅ Mark profile as complete
+router.put("/profile-complete", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Update user profile completion status
+    const updateQuery = `
+      UPDATE users 
+      SET profile_complete = true, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, email, first_name, last_name, campus_verified, profile_complete
+    `;
+    
+    const result = await pool.query(updateQuery, [userId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const user = result.rows[0];
+    
+    // Also create a basic user profile if it doesn't exist
+    const profileCheckQuery = `SELECT id FROM user_profiles WHERE user_id = $1`;
+    const profileCheckResult = await pool.query(profileCheckQuery, [userId]);
+    
+    if (profileCheckResult.rows.length === 0) {
+      const createProfileQuery = `
+        INSERT INTO user_profiles (user_id)
+        VALUES ($1)
+      `;
+      await pool.query(createProfileQuery, [userId]);
+    }
+    
+    return res.json({
+      success: true,
+      message: "Profile marked as complete",
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        campusVerified: user.campus_verified,
+        profileComplete: user.profile_complete,
+      },
+    });
+  } catch (error) {
+    console.error("Profile completion error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+});
+
+// ✅ Delete user account
+router.delete("/account", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // First, verify the user exists and get their information for the email
+    const userQuery = "SELECT email, first_name, last_name FROM users WHERE id = $1";
+    const userResult = await pool.query(userQuery, [userId]);
+    
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    const user = userResult.rows[0];
+    
+    // Due to CASCADE constraints, we only need to delete the user record
+    // All related records will be automatically deleted
+    await pool.query("DELETE FROM users WHERE id = $1", [userId]);
+    
+    // Send account deletion confirmation email
+    try {
+      await sendAccountDeletionEmail(user.email, user.first_name);
+    } catch (emailError) {
+      console.error("Failed to send account deletion email:", emailError);
+      // Don't fail the request if email sending fails
+    }
+    
+    return res.json({
+      success: true,
+      message: "Account and all associated data have been permanently deleted"
+    });
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while deleting account"
     });
   }
 });

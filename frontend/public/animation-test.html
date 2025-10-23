@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-box {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, #ff0000, #0000ff);
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Animation Test</h1>
+        <p>This page tests if basic CSS animations work in your browser.</p>
+        
+        <h2>Pulse Animation</h2>
+        <div class="test-box pulse"></div>
+        <p>If you see a box that pulses (grows and shrinks), CSS animations are working.</p>
+        
+        <h2>Bounce Animation</h2>
+        <div class="test-box bounce"></div>
+        <p>If you see a box that bounces up and down, CSS animations are working.</p>
+        
+        <h2>JavaScript Animation Test</h2>
+        <button id="js-test" style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Click for JS Animation
+        </button>
+        <div id="js-box" style="width: 100px; height: 100px; background-color: #FF9800; margin: 20px 0; border-radius: 10px; transition: all 0.5s;"></div>
+        <p>Click the button to test JavaScript animations.</p>
+    </div>
+
+    <script>
+        document.getElementById('js-test').addEventListener('click', function() {
+            const box = document.getElementById('js-box');
+            box.style.transform = 'rotate(360deg) scale(1.5)';
+            box.style.backgroundColor = '#9C27B0';
+            
+            setTimeout(() => {
+                box.style.transform = 'rotate(0deg) scale(1)';
+                box.style.backgroundColor = '#FF9800';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

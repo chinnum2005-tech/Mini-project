@@ -37,6 +37,7 @@ CREATE TABLE user_profiles (
     year_of_study INTEGER,
     department VARCHAR(100),
     availability TEXT, -- JSON string for time slots
+    learning_goals TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -659,54 +659,54 @@ const generatePersonalizedRecommendations = (analytics) => {
 };
 
 // ✅ Simple chat message endpoint (for testing)
-router.post("/message", async (req, res) => {
-  try {
-    const { message, sessionId } = req.body;
+// router.post("/message", async (req, res) => {
+//   try {
+//     const { message, sessionId } = req.body;
 
-    if (!message || message.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: "Message cannot be empty"
-      });
-    }
+//     if (!message || message.trim() === '') {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Message cannot be empty"
+//       });
+//     }
 
-    // Simple rule-based responses for basic functionality
-    const responses = {
-      hello: "Hello! Welcome to BlockLearn. I can help you with learning sessions, skills, and more!",
-      help: "I can help you with: scheduling sessions, finding mentors, managing skills, providing feedback, and learning new topics.",
-      session: "To schedule a session, go to the Match page and find a mentor who offers the skills you want to learn.",
-      skill: "You can manage your skills in the Skills page. Add skills you want to learn or skills you can teach others.",
-      mentor: "To become a mentor, add skills you excel at to your 'Skills Offered' section in your profile.",
-      feedback: "After completing a session, you can provide feedback using our rating system to help improve future matches."
-    };
+//     // Simple rule-based responses for basic functionality
+//     const responses = {
+//       hello: "Hello! Welcome to BlockLearn. I can help you with learning sessions, skills, and more!",
+//       help: "I can help you with: scheduling sessions, finding mentors, managing skills, providing feedback, and learning new topics.",
+//       session: "To schedule a session, go to the Match page and find a mentor who offers the skills you want to learn.",
+//       skill: "You can manage your skills in the Skills page. Add skills you want to learn or skills you can teach others.",
+//       mentor: "To become a mentor, add skills you excel at to your 'Skills Offered' section in your profile.",
+//       feedback: "After completing a session, you can provide feedback using our rating system to help improve future matches."
+//     };
 
-    const lowerMessage = message.toLowerCase();
-    let response = "I'm here to help! Ask me about sessions, skills, mentors, or any BlockLearn features.";
+//     const lowerMessage = message.toLowerCase();
+//     let response = "I'm here to help! Ask me about sessions, skills, mentors, or any BlockLearn features.";
 
-    // Simple keyword matching
-    for (const [key, value] of Object.entries(responses)) {
-      if (lowerMessage.includes(key)) {
-        response = value;
-        break;
-      }
-    }
+//     // Simple keyword matching
+//     for (const [key, value] of Object.entries(responses)) {
+//       if (lowerMessage.includes(key)) {
+//         response = value;
+//         break;
+//       }
+//     }
 
-    res.json({
-      success: true,
-      message: "Message sent successfully",
-      data: {
-        response: response,
-        timestamp: new Date().toISOString()
-      }
-    });
+//     res.json({
+//       success: true,
+//       message: "Message sent successfully",
+//       data: {
+//         response: response,
+//         timestamp: new Date().toISOString()
+//       }
+//     });
 
-  } catch (error) {
-    console.error("Error sending chat message:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error"
-    });
-  }
-});
+//   } catch (error) {
+//     console.error("Error sending chat message:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal server error"
+//     });
+//   }
+// });
 
 module.exports = router;
