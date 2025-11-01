@@ -167,7 +167,7 @@ const NavbarHero: React.FC<NavbarHeroProps> = ({
                   </ul>)}</li>
                   <li className="border-t border-border mt-2 pt-2 space-y-2">
                     <a href="#" className="block w-full text-center px-3 py-2 text-sm hover:bg-muted rounded-lg">Login</a>
-                    <button className="w-full bg-foreground text-background hover:bg-slate-700 px-3 py-2.5 text-sm rounded-lg flex items-center justify-center gap-2 font-medium">
+                    <button className="w-full bg-foreground text-background hover:bg-slate-700 px-3 py-2.5 text-sm rounded-xl flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg transition-all duration-200">
                       Get Started<ArrowRight className="h-4 w-4" />
                     </button>
                   </li>

@@ -1,252 +1,317 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import { Wallet, Award, BookOpen, Users, Settings, LogOut, Calendar, DollarSign, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar, Clock, Users, Star, BookOpen, Video, MessageCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { axiosInstance } from "@/lib/axios";
 
-function MentorDashboard() {
-  const [user, setUser] = useState(null);
+const MentorDashboard = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("userData");
-    navigate("/");
-  };
+  const { user } = useAuth();
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [pendingQuestions, setPendingQuestions] = useState([]);
+  const [stats, setStats] = useState({
+    totalSessions: 0,
+    completedSessions: 0,
+    averageRating: 0,
+    totalStudents: 0
+  });
 
   useEffect(() => {
-    // Check if we have a token and try to get real user data
-    if (token) {
-      (async () => {
-        try {
-          const res = await axios.get("/api/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUser(res.data.user);
-        } catch (error) {
-          console.log("Backend not available, using local storage data");
-          // If backend is not available, try to get user data from localStorage
-          const savedUser = localStorage.getItem("userData");
-          if (savedUser) {
-            setUser(JSON.parse(savedUser));
-          } else {
-            // No saved data, redirect to login
-            handleLogout();
-          }
-        }
-      })();
-    } else {
-      // No token, check if we have saved user data
-      const savedUser = localStorage.getItem("userData");
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      } else {
-        // No saved data, redirect to login
-        navigate("/login");
-      }
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      
+      // Fetch dashboard data
+      const response = await axiosInstance.get("/api/sessions/dashboard");
+      const data = response.data.data;
+      
+      // Filter for mentor sessions
+      const mentorSessions = data.upcoming_sessions.filter(
+        session => session.user_role_in_session === 'mentor'
+      );
+      
+      setUpcomingSessions(mentorSessions);
+      setPendingQuestions(data.pending_questions);
+      
+      // Calculate stats
+      setStats({
+        totalSessions: mentorSessions.length,
+        completedSessions: mentorSessions.filter(s => s.status === 'completed').length,
+        averageRating: 4.8, // This would come from API in a real implementation
+        totalStudents: new Set(mentorSessions.map(s => s.student_id)).size
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      // setLoading(false); // Removed unused variable
     }
-  }, [token, navigate]);
+  };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'scheduled':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Scheduled</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">In Progress</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Cancelled</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>;
+    }
+  };
 
-  const nameAvailable = (user?.firstName || user?.first_name) && (user?.lastName || user?.last_name);
-  const emailLocal = (user?.email || "").split("@")[0];
-  const displayName = nameAvailable
-    ? `${user.firstName || user.first_name} ${user.lastName || user.last_name}`
-    : (emailLocal || "Mentor");
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-slate-900 shadow-sm border-b border-gray-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <Link to="/" className="text-2xl font-bold text-primary">
-                BlockLearn
-              </Link>
-              <span className="ml-4 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-sm rounded-full">
-                Mentor
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="text-gray-600 dark:text-slate-300 text-sm truncate max-w-32">{displayName}</span>
-              <Link to="/settings" className="text-gray-600 dark:text-slate-300 hover:text-primary transition-colors">
-                <Settings className="w-5 h-5" />
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container py-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mentor Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Welcome back, {user?.firstName}! Ready to help students learn today?
+            </p>
+          </div>
+          <div className="flex items-center space-x-4 mt-4 md:mt-0">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={user?.avatarUrl} alt={user?.firstName} />
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <Badge className="bg-green-100 text-green-800 hover:bg-green-100 mt-1">
+                Verified Mentor
+              </Badge>
             </div>
           </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">
-            Welcome back, {user.first_name || user.firstName}!
-          </h1>
-          <p className="text-gray-600 dark:text-slate-400">
-            Ready to help students learn today?
-          </p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link to="/sessions" className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-            <Calendar className="w-8 h-8 text-green-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">My Sessions</h3>
-            <p className="text-gray-600 dark:text-slate-400">View and manage your upcoming sessions</p>
-          </Link>
-
-          <Link to="/match" className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-            <Users className="w-8 h-8 text-green-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Student Requests</h3>
-            <p className="text-gray-600 dark:text-slate-400">Review and accept session requests</p>
-          </Link>
-
-          <Link to="/blockchain-certificates" className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-            <Award className="w-8 h-8 text-green-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">My Earnings</h3>
-            <p className="text-gray-600 dark:text-slate-400">Track your rewards and certificates</p>
-          </Link>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+                  <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalSessions}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-slate-400">Students Mentored</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-slate-100">24</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
+                  <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Students Helped</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalStudents}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-slate-400">Sessions Completed</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-slate-100">42</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                <Star className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900/30">
+                  <Star className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Rating</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.averageRating}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-slate-400">Average Rating</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-slate-100">4.8</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
+                  <Clock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completedSessions}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-slate-400">Total Earnings</p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-slate-100">12.5 BLC</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Upcoming Sessions */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Upcoming Sessions</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-slate-100">Advanced React Patterns</h3>
-                  <p className="text-sm text-gray-600 dark:text-slate-400">with Alex Johnson</p>
-                </div>
-                <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 text-xs rounded-full">
-                  Today, 2:00 PM
-                </span>
-              </div>
+        {/* Main Content */}
+        <Tabs defaultValue="sessions" className="space-y-6">
+          <TabsList className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+            <TabsTrigger value="sessions">Upcoming Sessions</TabsTrigger>
+            <TabsTrigger value="questions">Pending Questions</TabsTrigger>
+            <TabsTrigger value="skills">My Skills</TabsTrigger>
+          </TabsList>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-slate-100">JavaScript ES6+</h3>
-                  <p className="text-sm text-gray-600 dark:text-slate-400">with Sarah Williams</p>
-                </div>
-                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 text-xs rounded-full">
-                  Tomorrow, 10:00 AM
-                </span>
+          <TabsContent value="sessions" className="space-y-4">
+            {upcomingSessions.length === 0 ? (
+              <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+                <CardContent className="p-8 text-center">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Upcoming Sessions</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    You don't have any scheduled sessions yet. Students will book sessions with you soon!
+                  </p>
+                  <Button onClick={() => navigate('/sessions')}>
+                    View All Sessions
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {upcomingSessions.map((session) => (
+                  <Card key={session.id} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20 hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{session.skill_name}</CardTitle>
+                          <CardDescription>
+                            with {session.student_first_name} {session.student_last_name}
+                          </CardDescription>
+                        </div>
+                        {getStatusBadge(session.status)}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          {formatDate(session.scheduled_at)}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <Clock className="h-4 w-4 mr-2" />
+                          {formatTime(session.scheduled_at)} ({session.duration_minutes} min)
+                        </div>
+                        {session.meeting_link && (
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <Video className="h-4 w-4 mr-2" />
+                            <a 
+                              href={session.meeting_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              Join Meeting
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex justify-between mt-4">
+                        <Button variant="outline" size="sm">
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Chat
+                        </Button>
+                        <Button size="sm">
+                          Session Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
-            <Link to="/sessions" className="mt-4 inline-block text-primary hover:text-primary/80 font-medium">
-              View all sessions →
-            </Link>
-          </div>
+            )}
+          </TabsContent>
 
-          {/* Recent Feedback */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-slate-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Recent Feedback</h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="ml-2 text-sm font-medium text-gray-900 dark:text-slate-100">Alex Johnson</span>
-                </div>
-                <p className="text-gray-600 dark:text-slate-400 text-sm">
-                  "Great session! Learned a lot about React hooks and best practices."
-                </p>
+          <TabsContent value="questions" className="space-y-4">
+            {pendingQuestions.length === 0 ? (
+              <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+                <CardContent className="p-8 text-center">
+                  <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Pending Questions</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    There are no pending questions from students at the moment.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {pendingQuestions.map((question) => (
+                  <Card key={question.id} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">{question.skill_name}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Asked by {question.student_first_name} {question.student_last_name}
+                          </p>
+                          <p className="mt-2 text-gray-900 dark:text-white">{question.question}</p>
+                        </div>
+                        <Badge variant="secondary" className="self-start">
+                          {question.priority === 1 ? 'High' : question.priority === 0 ? 'Normal' : 'Low'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-4">
+                        <Button variant="outline" size="sm">
+                          Request Details
+                        </Button>
+                        <Button size="sm">
+                          Answer Question
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
+            )}
+          </TabsContent>
 
-              <div className="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="ml-2 text-sm font-medium text-gray-900 dark:text-slate-100">Sarah Williams</span>
+          <TabsContent value="skills" className="space-y-4">
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-white/20 dark:border-slate-700/20">
+              <CardHeader>
+                <CardTitle>My Teaching Skills</CardTitle>
+                <CardDescription>
+                  Skills you're offering to teach to students
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">JavaScript</Badge>
+                  <Badge variant="secondary">React</Badge>
+                  <Badge variant="secondary">Node.js</Badge>
+                  <Badge variant="secondary">Python</Badge>
+                  <Badge variant="secondary">Data Science</Badge>
+                  <Badge variant="secondary">Machine Learning</Badge>
                 </div>
-                <p className="text-gray-600 dark:text-slate-400 text-sm">
-                  "Very patient and knowledgeable mentor. Highly recommended!"
-                </p>
-              </div>
-            </div>
-            <Link to="/sessions" className="mt-4 inline-block text-primary hover:text-primary/80 font-medium">
-              View all feedback →
-            </Link>
-          </div>
-        </div>
-      </main>
+                <Button className="mt-4" onClick={() => navigate('/skills')}>
+                  Manage Skills
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
-}
+};
 
 export default MentorDashboard;

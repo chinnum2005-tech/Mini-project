@@ -48,10 +48,12 @@ const Register = () => {
     setMessage("");
     
     try {
+      console.log('Sending OTP for registration:', formData);
       await sendOTP(normalizeEmail(formData.email), true);
       setStep("otp");
       setMessage("OTP sent to your email! Check your inbox.");
     } catch (error) {
+      console.error('Send OTP error:', error);
       setMessage(error.response?.data?.message || error.response?.data?.error || error.message || "Error sending OTP");
     } finally {
       setIsLoading(false);
@@ -68,6 +70,7 @@ const Register = () => {
     setMessage("");
     
     try {
+      console.log('Verifying OTP for registration:', { email: formData.email, otp, firstName: formData.firstName, lastName: formData.lastName });
       const res = await verifyOTP(normalizeEmail(formData.email), otp, formData.firstName, formData.lastName, true);
       localStorage.setItem("token", res.token);
       
@@ -83,6 +86,7 @@ const Register = () => {
       setMessage("✅ Registration successful! Redirecting to dashboard...");
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (error) {
+      console.error('Verify OTP error:', error);
       setMessage(error.response?.data?.message || error.response?.data?.error || error.message || "Error verifying OTP");
     } finally {
       setIsLoading(false);
@@ -97,10 +101,11 @@ const Register = () => {
 
   // Google OAuth registration handler
   const handleGoogleSuccess = async (credentialResponse) => {
+    console.log('Google login success:', credentialResponse);
     setIsLoading(true);
     setMessage("");
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/auth/google`, { 
+      const res = await axios.post('/api/auth/google', { 
         credential: credentialResponse.credential,
         isNewUser: true
       });
@@ -109,13 +114,15 @@ const Register = () => {
       setMessage("✅ Registration successful! Redirecting to dashboard...");
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (error) {
+      console.error("Google registration error:", error);
       setMessage(error.response?.data?.message || "Google registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleError = () => {
+  const handleGoogleError = (error) => {
+    console.error("Google login error:", error);
     setMessage("Google registration failed. Please try again.");
   };
 
@@ -292,7 +299,7 @@ const Register = () => {
                 <button
                   onClick={verifyOtp}
                   disabled={isLoading}
-                  className="flex-1 px-6 py-3 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="flex-1 px-6 py-3 rounded-xl bg-primary text-primary-foreground border border-primary/20 shadow-lg hover:bg-primary/90 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center hover:shadow-xl active:scale-[0.98]"
                 >
                   {isLoading ? (
                     <>

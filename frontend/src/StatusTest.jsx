@@ -18,7 +18,7 @@ function StatusTest() {
 
   const testBackendAPI = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/health');
+      const response = await fetch('/api/health');
       if (response.ok) {
         const data = await response.json();
         setBackendStatus(`✅ Backend API: ${data.message}`);
@@ -32,7 +32,7 @@ function StatusTest() {
 
   const testChatAPI = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/chat/message', {
+      const response = await fetch('/api/chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import LenisWrapper from "./components/LenisWrapper";
 import ChatWidget from "./components/WorkingChatWidget";
 import AnimationProvider from "./providers/AnimationProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Pages that exist
 import Index from "./pages/Index.jsx";
@@ -21,6 +22,7 @@ import RoleSelection from "./pages/RoleSelection.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import MentorDashboard from "./pages/MentorDashboard.jsx";
 import StudentProfileSetup from "./pages/StudentProfileSetup.jsx";
+import MentorApplication from "./pages/MentorApplication.jsx";
 
 // Demo pages
 import DemoGlowingEffect from "./pages/DemoGlowingEffect.jsx";
@@ -61,17 +63,18 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/student-dashboard" element={<StudentDashboard />} />
-            <Route path="/mentor-dashboard" element={<MentorDashboard />} />
-            <Route path="/skills" element={<Skills />} />
-            <Route path="/match" element={<Match />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/student-dashboard" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
+            <Route path="/mentor-dashboard" element={<ProtectedRoute requiredRole="mentor" mentorApproved={true}><MentorDashboard /></ProtectedRoute>} />
+            <Route path="/mentor-application" element={<ProtectedRoute><MentorApplication /></ProtectedRoute>} />
+            <Route path="/skills" element={<ProtectedRoute><Skills /></ProtectedRoute>} />
+            <Route path="/match" element={<ProtectedRoute><Match /></ProtectedRoute>} />
+            <Route path="/sessions" element={<ProtectedRoute><Sessions /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/set-password" element={<SetPassword />} />
-            <Route path="/profile" element={<StudentProfile />} />
-            <Route path="/student-profile-setup" element={<StudentProfileSetup />} />
-            <Route path="/blockchain-certificates" element={<BlockchainCertificates />} />
+            <Route path="/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+            <Route path="/student-profile-setup" element={<ProtectedRoute><StudentProfileSetup /></ProtectedRoute>} />
+            <Route path="/blockchain-certificates" element={<ProtectedRoute><BlockchainCertificates /></ProtectedRoute>} />
             <Route path="/animation-settings" element={<AnimationSettings />} />
             <Route path="/animation-guide" element={<AnimationGuide />} />
 

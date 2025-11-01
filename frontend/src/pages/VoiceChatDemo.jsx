@@ -4,9 +4,23 @@ import VoiceEnabledChatbot from '../components/VoiceEnabledChatbot';
 const VoiceChatDemo = () => {
   const [messages, setMessages] = useState([
     { id: 1, text: "Hello! I'm your voice-enabled assistant. You can type or speak your messages.", sender: 'bot' },
-    { id: 2, text: "Try clicking the 'Voice Input' button and speaking naturally.", sender: 'bot' }
+    { id: 2, text: "Try clicking the mic button and speaking naturally - I'll respond with voice too!", sender: 'bot' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const speakBotResponse = (text) => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   const handleSendMessage = async (messageText) => {
     if (!messageText.trim()) return;
@@ -31,6 +45,9 @@ const VoiceChatDemo = () => {
       };
       setMessages(prev => [...prev, botMessage]);
       setIsLoading(false);
+
+      // Speak the bot response aloud
+      speakBotResponse(botResponse);
     }, 1000);
   };
 
@@ -46,7 +63,7 @@ const VoiceChatDemo = () => {
     }
     
     if (lowerMessage.includes('voice')) {
-      return "Yes, I support voice input! Click the 'Voice Input' button and speak naturally. I'll convert your speech to text.";
+      return "Yes! I have voice input and output. Click the mic button to speak to me, and I'll respond with voice too!";
     }
     
     if (lowerMessage.includes('thank')) {
@@ -64,7 +81,7 @@ const VoiceChatDemo = () => {
     // Default response
     const responses = [
       "That's interesting! Tell me more about that.",
-      "I understand. How else can I assist you?",
+      "I understand. How else can I assist you? Try using the mic button to speak your next message - I'll respond with voice!",
       "Thanks for sharing. Is there anything specific you'd like to know?",
       "I'm here to help. What would you like to explore next?",
       "Great question! I can provide more information on that topic."
@@ -78,38 +95,38 @@ const VoiceChatDemo = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Voice-Enabled Chatbot Demo
+            Google Assistant-Style Voice Chatbot
           </h1>
           <p className="text-gray-600 dark:text-slate-300">
-            Experience the power of voice-to-text chat functionality
+            Experience the simplicity of voice interaction with a single mic button - just like Google Assistant!
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Demo Information */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-all hover:shadow-xl">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Voice Chat Features
             </h2>
             
             <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start space-x-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                   </svg>
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900 dark:text-white">Voice Input</h3>
                   <p className="text-gray-600 dark:text-slate-400 text-sm">
-                    Speak naturally and convert speech to text in real-time with multiple language support.
+                    Speak naturally with a simple mic button - just like Google Assistant. No complex controls needed!
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start space-x-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m-2.828-9.9a9 9 0 012.828-2.828" />
                   </svg>
                 </div>
@@ -121,9 +138,9 @@ const VoiceChatDemo = () => {
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start space-x-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-violet-600 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                   </svg>
                 </div>
@@ -135,41 +152,55 @@ const VoiceChatDemo = () => {
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-start space-x-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-blue-600 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900 dark:text-white">Continuous Mode</h3>
+                  <p className="text-gray-600 dark:text-slate-400 text-sm">
+                    Enable continuous listening for truly hands-free operation. The system automatically detects when you start and stop speaking.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-rose-600 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">Real-time Recognition</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-white">Google Assistant Style</h3>
                   <p className="text-gray-600 dark:text-slate-400 text-sm">
-                    See your spoken words converted to text instantly as you speak.
+                    Just like Google Assistant! Single mic button that toggles listening mode with automatic 1-second response timing.
                   </p>
                 </div>
               </div>
             </div>
             
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <h4 className="font-medium text-gray-900 dark:text-white mb-2">How to Use</h4>
-              <ol className="list-decimal list-inside space-y-1 text-gray-600 dark:text-slate-400 text-sm">
-                <li>Click the "Voice Input" button to start speaking</li>
-                <li>Speak naturally into your microphone</li>
-                <li>See your words appear in the text box in real-time</li>
-                <li>Click "Stop Recording" when finished</li>
-                <li>Send your message using the send button</li>
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl text-white">
+              <h4 className="font-medium text-white mb-2">How to Use</h4>
+              <ol className="list-decimal list-inside space-y-1 text-white/90 text-sm">
+                <li><strong>Click the mic button</strong> to start voice input</li>
+                <li><strong>Speak naturally</strong> - see your words appear in real-time</li>
+                <li><strong>Stop speaking</strong> - message auto-sends in just 1 second!</li>
+                <li><strong>🎤 Hear responses:</strong> The chatbot will speak its replies aloud</li>
+                <li><strong>⚡ Just like Google Assistant:</strong> Simple one-tap voice interaction!</li>
               </ol>
             </div>
           </div>
           
           {/* Chat Demo */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden transition-all hover:shadow-xl">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-500 to-indigo-600">
+              <h2 className="text-xl font-semibold text-white">
                 Try the Voice Chat
               </h2>
-              <p className="text-gray-600 dark:text-slate-400 text-sm mt-1">
-                Type or speak your message below
+              <p className="text-white/90 text-sm mt-1">
+                Type or speak your message below - try the simplified mic button for Google Assistant-like voice interaction!
               </p>
             </div>
             
@@ -180,10 +211,10 @@ const VoiceChatDemo = () => {
                   className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                    className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
                       msg.sender === 'user'
-                        ? 'bg-primary text-white'
-                        : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-slate-100'
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-br-none'
+                        : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-slate-100 rounded-bl-none'
                     }`}
                   >
                     {msg.text}
@@ -193,7 +224,7 @@ const VoiceChatDemo = () => {
               
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 dark:bg-slate-700 rounded-lg px-4 py-2">
+                  <div className="bg-gray-100 dark:bg-slate-700 rounded-2xl px-4 py-3 rounded-bl-none">
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -212,34 +243,34 @@ const VoiceChatDemo = () => {
           </div>
         </div>
         
-        <div className="mt-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
+        <div className="mt-8 bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 transition-all hover:shadow-xl">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Technical Implementation
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
+            <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20">
               <h3 className="font-medium text-gray-900 dark:text-white mb-2">Voice Recognition</h3>
               <p className="text-gray-600 dark:text-slate-400 text-sm">
                 Uses the Web Speech API for speech recognition, which is supported in modern browsers like Chrome, Edge, and Safari.
               </p>
             </div>
             
-            <div>
+            <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20">
               <h3 className="font-medium text-gray-900 dark:text-white mb-2">Text-to-Speech</h3>
               <p className="text-gray-600 dark:text-slate-400 text-sm">
                 Implements the SpeechSynthesis API to convert text responses to spoken audio in multiple languages.
               </p>
             </div>
             
-            <div>
+            <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
               <h3 className="font-medium text-gray-900 dark:text-white mb-2">Browser Support</h3>
               <p className="text-gray-600 dark:text-slate-400 text-sm">
                 Works on all modern browsers with Web Speech API support. Falls back to text-only input for unsupported browsers.
               </p>
             </div>
             
-            <div>
+            <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20">
               <h3 className="font-medium text-gray-900 dark:text-white mb-2">Customization</h3>
               <p className="text-gray-600 dark:text-slate-400 text-sm">
                 Easily customizable with language selection, voice settings, and UI themes to match your application.

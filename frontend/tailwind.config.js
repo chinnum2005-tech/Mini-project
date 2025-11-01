@@ -46,9 +46,9 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "1.25rem", // 20px
+        md: "1rem",    // 16px
+        sm: "0.75rem", // 12px
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

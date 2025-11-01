@@ -236,3 +236,47 @@ If you encounter issues:
 2. Review backend logs
 3. Verify all environment variables are set
 4. Ensure database is properly configured
+
+## 📧 Email Configuration (Gmail)
+
+For Gmail to work properly with this application, you need to set up an App Password:
+
+### Step 1: Enable 2-Factor Authentication
+1. Go to your Google Account settings
+2. Navigate to Security
+3. Enable 2-Step Verification
+
+### Step 2: Generate an App Password
+1. In your Google Account, go to Security → 2-Step Verification → App passwords
+2. Select "Mail" as the app and "Other" as the device
+3. Give it a name like "BlockLearn OTP"
+4. Copy the generated 16-character password
+
+### Step 3: Update Your Environment Variables
+In `backend/.env`, use the App Password (not your regular Gmail password):
+```env
+EMAIL_SERVICE=gmail
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=the-16-character-app-password
+```
+
+### Testing Email Configuration
+After updating your credentials:
+```bash
+cd backend
+node test-email-fixed.js
+```
+
+If you continue to have issues, you can also try using a custom SMTP configuration:
+```env
+# Comment out EMAIL_SERVICE
+# EMAIL_SERVICE=gmail
+
+# Use custom SMTP settings
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+```
+

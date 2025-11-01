@@ -16,6 +16,7 @@ const moderationRoutes = require('./routes/moderation');
 const userSkillsRoutes = require('./routes/userSkills');
 const skillMatchingRoutes = require('./routes/skillMatching');
 const adminAnalyticsRoutes = require('./routes/adminAnalytics');
+const mentorVerificationRoutes = require('./routes/mentorVerification');
 const { initializeWebSocketService } = require('./services/webSocketService');
 
 const app = express();
@@ -43,6 +44,7 @@ app.use('/api/groups', groupsRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/skill-matching', skillMatchingRoutes);
 app.use('/api/admin-analytics', adminAnalyticsRoutes);
+app.use('/api/mentor-verification', mentorVerificationRoutes);
 
 // Initialize WebSocket service
 initializeWebSocketService(server);

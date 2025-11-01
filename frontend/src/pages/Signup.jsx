@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Sparkles, ArrowLeft, Mail, User, CheckCircle, AlertCircle } from "lucide-react";
 import { sendOTP, verifyOTP } from "@/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 function Signup() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ function Signup() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -62,8 +64,7 @@ function Signup() {
     try {
       const response = await verifyOTP(email, otp, firstName, lastName, true);
       if (response.success) {
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
+        await login(response.token, response.user);
         setMessage("✅ Account created successfully!");
         // Redirect to profile setup for new users
         setTimeout(() => navigate("/student-profile-setup"), 1500);

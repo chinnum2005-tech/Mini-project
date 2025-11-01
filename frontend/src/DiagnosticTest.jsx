@@ -23,7 +23,7 @@ function DiagnosticTest() {
 
   const testBackendHealth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/health');
+      const response = await fetch('/api/health');
       if (response.ok) {
         const data = await response.json();
         setBackendStatus(`✅ Backend API: ${data.message}`);
@@ -39,7 +39,7 @@ function DiagnosticTest() {
 
   const testChatAPI = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/chat/message', {
+      const response = await fetch('/api/chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ function DiagnosticTest() {
   const testWithToken = async () => {
     try {
       // Test with a mock token
-      const response = await fetch('http://localhost:5000/api/chat/message', {
+      const response = await fetch('/api/chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

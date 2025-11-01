@@ -8,7 +8,7 @@ const ConnectionTest = () => {
   useEffect(() => {
     const testConnection = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/health');
+        const response = await axios.get('/api/health');
         setStatus('✅ Connected Successfully');
         setDetails(`Backend responded: ${response.data.message}`);
       } catch (error) {
@@ -28,12 +28,12 @@ const ConnectionTest = () => {
         <div className="space-y-6">
           <div className="bg-black/30 rounded-lg p-6">
             <h2 className="text-xl font-semibold text-white mb-2">Frontend Status</h2>
-            <p className="text-green-400">Running on http://localhost:5180</p>
+            <p className="text-green-400">Running on http://localhost:5173</p>
           </div>
           
           <div className="bg-black/30 rounded-lg p-6">
             <h2 className="text-xl font-semibold text-white mb-2">Backend Status</h2>
-            <p className="text-blue-400">Running on http://localhost:5001</p>
+            <p className="text-blue-400">Running on http://localhost:5000</p>
           </div>
           
           <div className="bg-black/30 rounded-lg p-6">

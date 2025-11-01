@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.27/jsrsasign-all-min.js"></script>
+</head>
+<body>
+    <h1>JWT Token Generator</h1>
+    <button onclick="generateToken()">Generate Token</button>
+    <div id="result"></div>
+
+    <script>
+        function generateToken() {
+            // Use the same secret as in your backend .env file
+            const JWT_SECRET = '76f9ad7a2804abf2d6cbf09f15ac93da3f99aa850e9418510d088ed9601799d1';
+            
+            // Create a test user object
+            const user = {
+                userId: 1,
+                email: 'test@example.com'
+            };
+            
+            // Generate token (this is a simplified version for demonstration)
+            const header = {
+                alg: 'HS256',
+                typ: 'JWT'
+            };
+            
+            const payload = {
+                ...user,
+                iat: Math.floor(Date.now() / 1000),
+                exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+            };
+            
+            // For now, just show the user data you need to add to localStorage
+            document.getElementById('result').innerHTML = `
+                <h2>Manual Login Instructions:</h2>
+                <p>1. Open your browser DevTools (F12)</p>
+                <p>2. Go to Application/Storage tab</p>
+                <p>3. Find Local Storage -> http://localhost:5173</p>
+                <p>4. Add these key-value pairs:</p>
+                <p><strong>Key:</strong> token<br>
+                <strong>Value:</strong> (any valid JWT token - you can use this temporary one for testing)</p>
+                <p><strong>Key:</strong> userData<br>
+                <strong>Value:</strong></p>
+                <pre>${JSON.stringify({
+                    id: 1,
+                    email: 'test@example.com',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    campusVerified: true,
+                    profileComplete: false
+                }, null, 2)}</pre>
+                <p>5. Refresh the page and you should be logged in</p>
+            `;
+        }
+    </script>
+</body>
+</html>

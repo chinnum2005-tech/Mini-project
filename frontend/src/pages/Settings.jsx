@@ -70,7 +70,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setTheme("light")}
-              className={`rounded-lg border px-4 py-3 text-left transition-colors ${current === "light" ? "border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800" : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"}`}
+              className={`rounded-xl border px-4 py-3 text-left transition-all duration-200 ${current === "light" ? "border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800 shadow-md" : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-sm"}`}
             >
               <div className="font-medium text-gray-900 dark:text-slate-100">Light</div>
               <div className="text-xs text-gray-500 dark:text-slate-400">Bright interface</div>
@@ -78,7 +78,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setTheme("dark")}
-              className={`rounded-lg border px-4 py-3 text-left transition-colors ${current === "dark" ? "border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800" : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"}`}
+              className={`rounded-xl border px-4 py-3 text-left transition-all duration-200 ${current === "dark" ? "border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800 shadow-md" : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-sm"}`}
             >
               <div className="font-medium text-gray-900 dark:text-slate-100">Dark</div>
               <div className="text-xs text-gray-500 dark:text-slate-400">Low-light friendly</div>
@@ -86,10 +86,10 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setTheme("system")}
-              className={`rounded-lg border px-4 py-3 text-left transition-colors ${theme === "system" ? "border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800" : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600"}`}
+              className={`rounded-xl border px-4 py-3 text-left transition-all duration-200 ${current === "system" ? "border-primary-500 ring-2 ring-primary-200 dark:ring-primary-800 shadow-md" : "border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-sm"}`}
             >
               <div className="font-medium text-gray-900 dark:text-slate-100">System</div>
-              <div className="text-xs text-gray-500 dark:text-slate-400">Match OS setting</div>
+              <div className="text-xs text-gray-500 dark:text-slate-400">Use system setting</div>
             </button>
           </div>
         </section>

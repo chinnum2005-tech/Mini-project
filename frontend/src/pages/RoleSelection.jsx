@@ -100,15 +100,15 @@ const RoleSelection = () => {
                   </div>
                   <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Mentor</h3>
                   <p className="text-gray-600 dark:text-slate-400 mb-6">
-                    Share your expertise, mentor students, and earn rewards for your contributions to the community.
+                    Share your expertise with students. Professors and teachers must apply and go through verification process.
                   </p>
                   <Button 
                     size="lg" 
                     variant="outline" 
-                    className="w-full border-green-500 text-green-500 hover:bg-green-500/10 text-lg py-6"
+                    className="w-full border-green-500 text-green-500 hover:bg-green-500/10 text-lg py-6 rounded-xl"
                     onClick={handleMentorLogin}
                   >
-                    Login as Mentor
+                    Apply as Mentor
                   </Button>
                 </div>
               </div>

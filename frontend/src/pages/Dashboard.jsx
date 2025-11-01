@@ -106,7 +106,7 @@ function Dashboard() {
               </Link>
               <AnimatedButton
                 onClick={handleLogout}
-                className="text-gray-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                className="text-gray-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors rounded-full p-2 hover:bg-red-500/10"
               >
                 <LogOut className="w-5 h-5" />
               </AnimatedButton>

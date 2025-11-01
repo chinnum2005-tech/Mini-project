@@ -60,16 +60,24 @@ npm run dev
 
 **Database error?**
 ```bash
-sudo service postgresql start
+# Check if PostgreSQL is running
+# Make sure DB_PASSWORD in backend/.env matches your PostgreSQL password
 ```
 
-**Email not sending?**
-- Use Gmail App Password (not regular password)
-- Enable 2FA on Gmail first
+**OTP not working?**
+```bash
+# Check if EMAIL_USER and EMAIL_PASS are correctly set in backend/.env
+# For Gmail, make sure you're using an App Password, not your regular password
+# Run the diagnostic script:
+cd backend
+node test-email-fixed.js
+```
 
-**Port already in use?**
-- Backend: Change `PORT` in `.env`
-- Frontend: Change port in `vite.config.js`
+**Frontend not connecting to backend?**
+```bash
+# Check if FRONTEND_URL in backend/.env matches your frontend URL
+# Make sure both servers are running
+```
 
 ## 📖 Full Documentation
 

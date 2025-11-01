@@ -628,4 +628,68 @@ router.delete("/account", authenticateToken, async (req, res) => {
   }
 });
 
+// ✅ Quick login for development/testing
+router.post("/quick-login", async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    // Check if user exists, if not create one
+    let user;
+    const existingUser = await pool.query(
+      "SELECT id, email, first_name, last_name, campus_verified, profile_complete FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      user = existingUser.rows[0];
+    } else {
+      // Create new user
+      const userQuery = `
+        INSERT INTO users (email, first_name, last_name, campus_verified)
+        VALUES ($1, $2, $3, true)
+        RETURNING id, email, first_name, last_name, campus_verified, profile_complete
+      `;
+      const userResult = await pool.query(userQuery, [email, 'Test', 'User']);
+      user = userResult.rows[0];
+
+      // Create empty profile
+      await pool.query("INSERT INTO user_profiles (user_id) VALUES ($1)", [user.id]);
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        campusVerified: user.campus_verified,
+        profileComplete: user.profile_complete,
+      },
+    });
+  } catch (error) {
+    console.error("Quick login error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+});
+
 module.exports = router;

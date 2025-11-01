@@ -1,17 +1,32 @@
 [build]
   command = "npm run build"
   publish = "frontend/dist"
+  base = "frontend"
 
 [[redirects]]
   from = "/api/*"
-  to = "https://blocklearn-backend.herokuapp.com/api/:splat"
+  to = "https://your-backend-domain.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
   status = 200
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+# Environment variables (replace with your actual values)
+[template.environment]
+  VITE_GOOGLE_CLIENT_ID = "Your Google OAuth Client ID"
+  VITE_API_URL = "Your backend API URL (e.g., https://your-backend-domain.com/api)"
+  VITE_APP_URL = "Your frontend URL (e.g., https://your-domain.netlify.app)"
 
 # Development settings
 [dev]
   command = "npm run dev"
   port = 3000
   publish = "frontend/dist"
+  base = "frontend"

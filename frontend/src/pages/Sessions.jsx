@@ -1,198 +1,170 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Calendar, Clock, MapPin, CheckCircle, Video, Users } from 'lucide-react';
 import FeedbackModal from '../components/FeedbackModal';
+import VideoConference from '../components/VideoConference';
 
-function Sessions() {
+const Sessions = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState({
     upcoming: [],
+    inProgress: [],
     completed: []
   });
   const [feedbackModal, setFeedbackModal] = useState({
     isOpen: false,
     sessionId: null,
-    userRole: null,
+    userRole: 'student',
     existingFeedback: null
   });
-  const [loading, setLoading] = useState(true);
 
-  // Mock data for demonstration - replace with actual API calls
+  // Mock data - in a real app, this would come from an API
+  const mockSessions = {
+    upcoming: [
+      {
+        id: 1,
+        title: 'Advanced React Patterns',
+        mentor: 'Alex Johnson',
+        time: 'Today, 3:00 PM',
+        duration: '60 min',
+        location: 'Online',
+        status: 'scheduled',
+        meeting_link: 'https://meet.google.com/abc-defg-hij'
+      },
+      {
+        id: 2,
+        title: 'Blockchain Fundamentals',
+        mentor: 'Sarah Chen',
+        time: 'Tomorrow, 10:00 AM',
+        duration: '90 min',
+        location: 'Online',
+        status: 'scheduled',
+        meeting_link: 'https://zoom.us/j/1234567890'
+      }
+    ],
+    inProgress: [
+      {
+        id: 3,
+        title: 'JavaScript ES6+ Features',
+        mentor: 'Mike Rodriguez',
+        time: 'Now',
+        duration: '45 min',
+        location: 'Online',
+        status: 'in_progress',
+        meeting_link: 'https://teams.microsoft.com/l/meetup-join/1234567890'
+      }
+    ],
+    completed: [
+      {
+        id: 4,
+        title: 'Introduction to Node.js',
+        mentor: 'Emma Wilson',
+        time: 'Oct 15, 2023',
+        duration: '60 min',
+        location: 'Online',
+        status: 'completed',
+        meeting_link: 'https://meet.google.com/xyz-abc-def',
+        hasFeedback: true
+      }
+    ]
+  };
+
   useEffect(() => {
-    // Simulate loading sessions
+    // Simulate API call
     setTimeout(() => {
-      setSessions({
-        upcoming: [
-          {
-            id: 1,
-            title: 'JavaScript Fundamentals',
-            mentor: 'Alex Johnson',
-            time: 'Tomorrow, 2:00 PM',
-            duration: '1 hour',
-            location: 'Online',
-            status: 'scheduled'
-          },
-          {
-            id: 2,
-            title: 'UI/UX Design Basics',
-            mentor: 'Sarah Chen',
-            time: 'Friday, 4:00 PM',
-            duration: '1.5 hours',
-            location: 'Library Room 201',
-            status: 'scheduled'
-          }
-        ],
-        completed: [
-          {
-            id: 3,
-            title: 'React Advanced Concepts',
-            mentor: 'Mike Rodriguez',
-            time: 'Yesterday, 3:00 PM',
-            duration: '2 hours',
-            location: 'Online',
-            status: 'completed',
-            hasFeedback: false
-          },
-          {
-            id: 4,
-            title: 'Node.js Backend Development',
-            mentor: 'Emma Wilson',
-            time: 'Last week, 1:00 PM',
-            duration: '1.5 hours',
-            location: 'Online',
-            status: 'completed',
-            hasFeedback: true
-          }
-        ]
-      });
+      setSessions(mockSessions);
       setLoading(false);
     }, 1000);
   }, []);
 
-  const handleFeedbackSubmit = async (feedbackData) => {
-    try {
-      const response = await fetch('/api/feedback/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(feedbackData)
-      });
-
-      if (response.ok) {
-        // Update local state to show feedback was submitted
-        setSessions(prev => ({
-          ...prev,
-          completed: prev.completed.map(session =>
-            session.id === feedbackData.session_id
-              ? { ...session, hasFeedback: true }
-              : session
-          )
-        }));
-      } else {
-        throw new Error('Failed to submit feedback');
-      }
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-      throw error;
-    }
-  };
-
-  const openFeedbackModal = async (sessionId, userRole) => {
-    try {
-      // Fetch existing feedback for the session
-      const response = await fetch(`/api/feedback/session/${sessionId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFeedbackModal({
-          isOpen: true,
-          sessionId,
-          userRole,
-          existingFeedback: data.data
-        });
-      } else {
-        setFeedbackModal({
-          isOpen: true,
-          sessionId,
-          userRole,
-          existingFeedback: null
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching feedback:', error);
-      setFeedbackModal({
-        isOpen: true,
-        sessionId,
-        userRole,
-        existingFeedback: null
-      });
-    }
+  const openFeedbackModal = (sessionId, userRole, existingFeedback = null) => {
+    setFeedbackModal({
+      isOpen: true,
+      sessionId,
+      userRole,
+      existingFeedback
+    });
   };
 
   const closeFeedbackModal = () => {
     setFeedbackModal({
       isOpen: false,
       sessionId: null,
-      userRole: null,
+      userRole: 'student',
       existingFeedback: null
     });
   };
 
+  const handleFeedbackSubmit = (feedbackData) => {
+    // In a real app, this would send data to the backend
+    console.log('Feedback submitted:', feedbackData);
+    closeFeedbackModal();
+  };
+
+  const handleJoinMeeting = (session) => {
+    if (session.meeting_link) {
+      // Open the meeting link in a new tab
+      window.open(session.meeting_link, '_blank');
+    } else {
+      // If no meeting link, show an alert or handle appropriately
+      alert('No meeting link available for this session.');
+    }
+  };
+
   const renderSessionCard = (session) => (
-    <div key={session.id} className="card">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex items-start space-x-3 sm:space-x-4">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${
-            session.status === 'completed'
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-              : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-          }`}>
-            {session.mentor.split(' ').map(n => n[0]).join('')}
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
-              {session.title}
-            </h3>
-            <p className="text-gray-600 dark:text-slate-400">with {session.mentor}</p>
-            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 dark:text-slate-400">
-              <span className="flex items-center">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                {session.time}
-              </span>
-              <span className="flex items-center">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {session.duration}
-              </span>
-              <span className="flex items-center">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {session.location}
-              </span>
+    <div key={session.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start space-x-4">
+            <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${
+              session.status === 'completed'
+                ? 'bg-green-500'
+                : session.status === 'in_progress'
+                ? 'bg-blue-500'
+                : 'bg-purple-500'
+            }`}>
+              {session.mentor.split(' ').map(n => n[0]).join('')}
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">
+                {session.title}
+              </h3>
+              <p className="text-gray-600 dark:text-slate-400">with {session.mentor}</p>
+              <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500 dark:text-slate-400">
+                <span className="flex items-center">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  {session.time}
+                </span>
+                <span className="flex items-center">
+                  <Clock className="w-4 h-4 mr-1" />
+                  {session.duration}
+                </span>
+                <span className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {session.location}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
+        
+        {/* Video Conference Component */}
+        <VideoConference session={session} onJoinMeeting={handleJoinMeeting} />
+        
+        <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 mt-4">
           {session.status === 'completed' ? (
             <>
               {session.hasFeedback ? (
-                <div className="px-3 py-2 text-sm text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <div className="px-3 py-2 text-sm text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center">
+                  <CheckCircle className="w-4 h-4 mr-1" />
                   Feedback Submitted
                 </div>
               ) : (
                 <button
                   onClick={() => openFeedbackModal(session.id, 'student')}
-                  className="btn-primary"
+                  className="btn-primary px-4 py-2 rounded-lg"
                 >
                   Give Feedback
                 </button>
@@ -200,14 +172,23 @@ function Sessions() {
             </>
           ) : (
             <>
-              <button className="btn-secondary">Reschedule</button>
-              <button className="btn-primary">Join Session</button>
+              <button className="btn-secondary px-4 py-2 rounded-lg">Reschedule</button>
+              {session.status === 'scheduled' && (
+                <button 
+                  onClick={() => handleJoinMeeting(session)}
+                  className="btn-primary px-4 py-2 rounded-lg flex items-center"
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Join Session
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
     </div>
   );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Navigation */}
@@ -249,13 +230,34 @@ function Sessions() {
         {/* Session Tabs */}
         <div className="flex justify-center mb-8">
           <div className="bg-white dark:bg-slate-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-slate-700">
-            <button className="px-6 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 rounded-md">
+            <button 
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'upcoming'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                  : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
+              }`}
+              onClick={() => setActiveTab('upcoming')}
+            >
               Upcoming
             </button>
-            <button className="px-6 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 transition-colors">
+            <button 
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'inProgress'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                  : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
+              }`}
+              onClick={() => setActiveTab('inProgress')}
+            >
               In Progress
             </button>
-            <button className="px-6 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 transition-colors">
+            <button 
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'completed'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                  : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300'
+              }`}
+              onClick={() => setActiveTab('completed')}
+            >
               Completed
             </button>
           </div>
@@ -272,33 +274,31 @@ function Sessions() {
               sessions.upcoming.map(session => renderSessionCard(session))
             ) : (
               <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-slate-100">No upcoming sessions</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Get started by scheduling a new session.</p>
               </div>
             )
-          ) : activeTab === 'completed' ? (
+          ) : activeTab === 'inProgress' ? (
+            sessions.inProgress.length > 0 ? (
+              sessions.inProgress.map(session => renderSessionCard(session))
+            ) : (
+              <div className="text-center py-12">
+                <Video className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-slate-100">No sessions in progress</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Sessions in progress will appear here.</p>
+              </div>
+            )
+          ) : (
             sessions.completed.length > 0 ? (
               sessions.completed.map(session => renderSessionCard(session))
             ) : (
               <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckCircle className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-slate-100">No completed sessions</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Completed sessions will appear here.</p>
               </div>
             )
-          ) : (
-            <div className="text-center py-12">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-slate-100">No sessions in progress</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Sessions in progress will appear here.</p>
-            </div>
           )}
         </div>
 
@@ -306,8 +306,13 @@ function Sessions() {
         <div className="mt-12 text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-4">Quick Actions</h2>
           <div className="flex justify-center space-x-4">
-            <button className="btn-primary">Schedule New Session</button>
-            <button className="btn-secondary">View Calendar</button>
+            <button 
+              className="btn-primary px-6 py-3 rounded-lg"
+              onClick={() => navigate('/match')}
+            >
+              Schedule New Session
+            </button>
+            <button className="btn-secondary px-6 py-3 rounded-lg">View Calendar</button>
           </div>
         </div>
       </main>
@@ -323,6 +328,6 @@ function Sessions() {
       />
     </div>
   );
-}
+};
 
 export default Sessions;

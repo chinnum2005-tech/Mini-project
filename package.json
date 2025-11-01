@@ -7,7 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"npm:server\" \"npm:client\"",
     "server": "npm --prefix backend run dev",
-    "client": "npm --prefix frontend run dev"
+    "client": "npm --prefix frontend run dev",
+    "prepare-deploy": "node prepare-deployment.js",
+    "setup": "node setup-project.js",
+    "deploy-check": "node deploy.js",
+    "test-deploy": "node test-deployment.js"
   },
   "keywords": [],
   "author": "",

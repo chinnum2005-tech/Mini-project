@@ -4,6 +4,8 @@ import { GoogleLogin } from '@react-oauth/google';
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Sparkles, ArrowLeft, Mail, CheckCircle, AlertCircle } from "lucide-react";
 import { sendOTP, verifyOTP } from "@/api";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/api";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -16,6 +18,7 @@ function Login() {
   const [role, setRole] = useState("student"); // default role
   const navigate = useNavigate();
   const location = useLocation();
+  const { login, devLogin } = useAuth();
 
   useEffect(() => {
     // Get role from URL query parameters
@@ -74,14 +77,18 @@ function Login() {
     try {
       const response = await verifyOTP(email, otp, null, null, false);
       if (response.success) {
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
+        await login(response.token, response.user);
         setMessage("✅ Login successful!");
         
         // Redirect to dashboard for all users (existing users)
         setTimeout(() => {
           if (role === 'mentor') {
-            navigate("/mentor-dashboard");
+            // Check if mentor is approved before redirecting
+            if (response.user.userType === 'mentor') {
+              navigate("/mentor-application");
+            } else {
+              navigate("/mentor-dashboard");
+            }
           } else {
             navigate("/student-dashboard");
           }
@@ -100,24 +107,23 @@ function Login() {
     setIsLoading(true);
     setMessage("");
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ credential: credentialResponse.credential }),
+      const response = await api.post('/auth/google', { 
+        credential: credentialResponse.credential 
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userData', JSON.stringify(data.user));
+      if (response.data.success) {
+        await login(response.data.token, response.data.user);
         setMessage("✅ Login successful!");
         
         // Redirect to dashboard for all users (existing users)
         setTimeout(() => {
           if (role === 'mentor') {
-            navigate("/mentor-dashboard");
+            // Check if mentor is approved before redirecting
+            if (response.data.user.userType === 'mentor') {
+              navigate("/mentor-application");
+            } else {
+              navigate("/mentor-dashboard");
+            }
           } else {
             navigate("/student-dashboard");
           }
@@ -294,6 +300,51 @@ function Login() {
                 width="400px"
                 className="w-full flex justify-center"
               />
+
+              {/* Development Bypass Section */}
+              <div className="mt-6 p-4 bg-yellow-100 rounded-lg border border-yellow-300">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Development Access</h3>
+                <p className="text-sm text-yellow-700 mb-3">Skip authentication for quick testing</p>
+                <button
+                  onClick={() => {
+                    devLogin();
+                    navigate("/student-dashboard");
+                  }}
+                  className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Bypass Login (Dev Only)
+                </button>
+              </div>
+
+              {/* Quick Login for Development */}
+              <div className="mt-4 p-4 bg-yellow-100 rounded-lg border border-yellow-300">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-2">Development Quick Login</h3>
+                <p className="text-sm text-yellow-700 mb-3">Click below to quickly access the dashboard for testing</p>
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await api.post('/auth/quick-login', { 
+                        email: 'test@example.com' 
+                      });
+                      
+                      if (response.data.success) {
+                        await login(response.data.token, response.data.user);
+                        setMessage("✅ Quick login successful!");
+                        setTimeout(() => {
+                          navigate("/student-dashboard");
+                        }, 1000);
+                      } else {
+                        setMessage("Quick login failed. Please try again.");
+                      }
+                    } catch (error) {
+                      setMessage("Quick login failed. Please try again.");
+                    }
+                  }}
+                  className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  Quick Login as Test User
+                </button>
+              </div>
 
               {/* Message Display */}
               {message && (

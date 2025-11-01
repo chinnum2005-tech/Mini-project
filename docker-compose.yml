@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    networks:
+      - blocklearn-network
+
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=blocklearn_db
+      - DB_USER=blocklearn_user
+      - DB_PASSWORD=blocklearn_password
+      - JWT_SECRET=your_jwt_secret_here
+      - GOOGLE_CLIENT_ID=your_google_client_id_here
+      - GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+    depends_on:
+      - database
+    networks:
+      - blocklearn-network
+
+  # Database service
+  database:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=blocklearn_db
+      - POSTGRES_USER=blocklearn_user
+      - POSTGRES_PASSWORD=blocklearn_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/models:/docker-entrypoint-initdb.d
+    networks:
+      - blocklearn-network
+
+  # Adminer for database management
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - blocklearn-network
+
+networks:
+  blocklearn-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

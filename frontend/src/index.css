@@ -36,7 +36,7 @@ All colors MUST be HSL.
     --input: 220 15% 20%;
     --ring: 260 85% 65%;
 
-    --radius: 1rem;
+    --radius: 1.25rem; /* 20px for more curved corners */
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(260 85% 65%) 0%, hsl(195 100% 50%) 100%);
@@ -100,6 +100,17 @@ All colors MUST be HSL.
     }
   }
 
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .bg-animated-gradient {
     background: linear-gradient(
       135deg,
@@ -128,6 +139,10 @@ All colors MUST be HSL.
     animation: glow 2s ease-in-out infinite;
   }
 
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+
   .bg-gradient-primary {
     background: var(--gradient-primary);
   }
@@ -141,23 +156,23 @@ All colors MUST be HSL.
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+    @apply px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900 shadow-lg hover:shadow-xl;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+    @apply px-6 py-3 bg-gray-600 text-white rounded-xl font-medium hover:bg-gray-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 shadow-lg hover:shadow-xl;
   }
 
   .btn-blue {
-    @apply px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+    @apply px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 shadow-lg hover:shadow-xl;
   }
 
   .btn-outline {
-    @apply px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+    @apply px-6 py-3 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-900 shadow-sm hover:shadow-md;
   }
 
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+    @apply w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all;
   }
 
   /* From Uiverse.io by andrew-manzyk */

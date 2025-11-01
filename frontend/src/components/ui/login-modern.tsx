@@ -153,7 +153,7 @@ const LoginModern = () => {
                 <button
                   type="button"
                   onClick={() => {/* Handle Google Sign In */}}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 rounded-lg border-2 border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 group"
+                  className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white text-gray-700 rounded-xl border-2 border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 group"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" className="group-hover:scale-110 transition-transform">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09"/>
@@ -208,7 +208,7 @@ const LoginModern = () => {
               <div className='flex gap-4 justify-center items-center'>
                  <button 
                   type="submit"
-                  className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-md bg-[var(--color-border)] px-6 py-2.5 text-sm font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-[var(--color-text-primary)]/50 cursor-pointer"
+                  className="group/button relative inline-flex justify-center items-center overflow-hidden rounded-xl bg-[var(--color-border)] px-6 py-3 text-sm font-normal text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg hover:shadow-[var(--color-text-primary)]/50 cursor-pointer"
                 >
                 <span className="text-sm px-2 py-1 relative z-10">Sign In</span>
                 <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">

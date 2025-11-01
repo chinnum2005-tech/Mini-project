@@ -431,13 +431,13 @@ const Button = ({ variant = "default", size = "sm", className = "", children, ..
   }
 
   const sizes = {
-    sm: "h-9 px-4 py-2 text-sm",
-    lg: "px-8 py-6 text-lg",
+    sm: "h-10 px-4 py-2 text-sm rounded-lg",
+    lg: "px-8 py-6 text-lg rounded-xl",
   }
 
   return (
     <button
-      className={`group relative overflow-hidden rounded-full ${baseClasses} ${variants[variant]} ${sizes[size]} ${className}` }
+      className={`group relative overflow-hidden ${baseClasses} ${variants[variant]} ${sizes[size]} ${className}` }
       {...props}
     >
       <span className="relative z-10 flex items-center">{children}</span>

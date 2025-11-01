@@ -160,7 +160,7 @@ const Index = () => {
               <AnimatedButton
                 size="lg"
                 onClick={handleGetStarted}
-                className="bg-primary hover:bg-primary/90 text-lg px-8 py-4"
+                className="bg-primary hover:bg-primary/90 text-lg px-8 py-4 rounded-xl shadow-lg hover:shadow-xl"
               >
                 Start Learning Today
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -169,7 +169,7 @@ const Index = () => {
                 size="lg"
                 variant="outline"
                 onClick={handleBrowseSkills}
-                className="text-lg px-8 py-4"
+                className="text-lg px-8 py-4 rounded-xl shadow-sm hover:shadow-md"
               >
                 Browse Skills
               </AnimatedButton>

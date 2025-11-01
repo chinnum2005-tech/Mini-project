@@ -54,7 +54,7 @@ const LandingPage = () => {
                 <Link to="/login" className="hidden sm:flex items-center rounded-full px-4 py-2 text-sm font-medium text-white/90 transition-all hover:text-white hover:bg-white/10">
                   Login
                 </Link>
-                <Link to="/signup" className="group relative overflow-hidden inline-flex items-center justify-center font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-full h-9 px-4 py-2 text-sm bg-emerald-500 text-white hover:bg-emerald-600">
+                <Link to="/signup" className="group relative overflow-hidden inline-flex items-center justify-center font-medium transition-all duration-300 ease-in-out rounded-full h-12 px-6 py-3 text-sm bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-lg">
                   <span className="relative z-10 flex items-center">
                     Get Started
                     <ArrowRight className="ml-2 h-4 w-4" />
